@@ -1,0 +1,18 @@
+build
+dist
+tmp
+target
+
+.settings
+.classpath
+.project
+rebel.xml
+
+.vscode
+
+# Ignore Test reporters
+#######################
+test
+coverage
+report
+doc
