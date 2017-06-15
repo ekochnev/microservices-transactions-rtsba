@@ -26,7 +26,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.client.RestTemplate;
@@ -440,7 +439,7 @@ public class RtsBaAspect {
     }
 
     private String getParticipantUrl(String url, String[] requestMappingPath, String transactionalPath) {
-    	if (StringUtils.isEmpty(transactionalPath)) {
+    	if (null == transactionalPath){
     		return url;
     	}
     	

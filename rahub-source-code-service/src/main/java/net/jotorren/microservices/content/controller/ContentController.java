@@ -65,7 +65,7 @@ public class ContentController {
 		return new ResponseEntity<Void>(null, headersResp, HttpStatus.CREATED);	
 	}
 
-	@RtsBaTransactional(value = RtsBaPropagation.MANDATORY, messages = {RtsBaMessage.CLOSE, RtsBaMessage.COMPENSATE})
+	@RtsBaTransactional(value = RtsBaPropagation.MANDATORY, path = "", messages = {RtsBaMessage.CLOSE, RtsBaMessage.COMPENSATE})
 	@RequestMapping(value = "/timeout", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> timeout(HttpServletRequest request, @RequestBody SourceCodeItem data) {
 		LOG.info("Trying to save content...");
@@ -90,12 +90,6 @@ public class ContentController {
 	
 	@RequestMapping(method = RequestMethod.PUT, consumes = BusinessActivityMessageContentType.COMPENSATE)
 	public void compensateCallback(@RequestBody BusinessActivityMessage data) {	
-		LOG.info("PARTICIPANT [/content] Protocol :: ON COMPENSATE");
-		this.service.undo();
-	}
-	
-	@RequestMapping(value="/timeout", method = RequestMethod.PUT, consumes = BusinessActivityMessageContentType.COMPENSATE)
-	public void compensateTimeoutCallback(@RequestBody BusinessActivityMessage data) {	
 		LOG.info("PARTICIPANT [/content] Protocol :: ON COMPENSATE");
 		this.service.undo();
 	}

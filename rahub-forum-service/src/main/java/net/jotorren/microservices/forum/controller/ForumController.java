@@ -53,7 +53,7 @@ public class ForumController {
 		return new ResponseEntity<Void>(null, headersResp, HttpStatus.CREATED);	
 	}
 
-	@RtsBaTransactional(value = RtsBaPropagation.MANDATORY, messages = {RtsBaMessage.CLOSE, RtsBaMessage.COMPENSATE, RtsBaMessage.FAILED})
+	@RtsBaTransactional(value = RtsBaPropagation.MANDATORY, path = "", messages = {RtsBaMessage.CLOSE, RtsBaMessage.COMPENSATE, RtsBaMessage.FAILED})
 	@RequestMapping(value = "/fail", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> fail(HttpServletRequest request, @RequestBody Forum data) {
 		LOG.info("Trying to save forum...");
@@ -65,7 +65,7 @@ public class ForumController {
 		return new ResponseEntity<Void>(null, headersResp, HttpStatus.CREATED);	
 	}
 	
-	@RtsBaTransactional(value = RtsBaPropagation.MANDATORY, messages = {RtsBaMessage.CLOSE, RtsBaMessage.COMPENSATE, RtsBaMessage.FAILED})
+	@RtsBaTransactional(value = RtsBaPropagation.MANDATORY, path = "", messages = {RtsBaMessage.CLOSE, RtsBaMessage.COMPENSATE, RtsBaMessage.FAILED})
 	@RequestMapping(value = "/timeout", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> timeout(HttpServletRequest request, @RequestBody Forum data) {
 		LOG.info("Trying to save forum...");
@@ -88,7 +88,7 @@ public class ForumController {
 		this.service.close();
 	}	
 
-	@RequestMapping(value = "/fail", method = RequestMethod.PUT, consumes = BusinessActivityMessageContentType.FAILED)
+	@RequestMapping(method = RequestMethod.PUT, consumes = BusinessActivityMessageContentType.FAILED)
 	public void failedCallback(@RequestBody BusinessActivityMessage data) {	
 		LOG.info("PARTICIPANT [/forum] Protocol :: ON FAILED");
 		this.service.failed();
@@ -96,12 +96,6 @@ public class ForumController {
 	
 	@RequestMapping(method = RequestMethod.PUT, consumes = BusinessActivityMessageContentType.COMPENSATE)
 	public void compensateCallback(@RequestBody BusinessActivityMessage data) {	
-		LOG.info("PARTICIPANT [/forum] Protocol :: ON COMPENSATE");
-		this.service.undo();
-	}
-	
-	@RequestMapping(value="/timeout", method = RequestMethod.PUT, consumes = BusinessActivityMessageContentType.COMPENSATE)
-	public void compensateTimeoutCallback(@RequestBody BusinessActivityMessage data) {	
 		LOG.info("PARTICIPANT [/forum] Protocol :: ON COMPENSATE");
 		this.service.undo();
 	}
