@@ -22,7 +22,7 @@ import net.jotorren.microservices.rtsba.CoordinationContext;
 import net.jotorren.microservices.rtsba.CoordinationContextParticipant;
 import net.jotorren.microservices.rtsba.CreateCoordinationContext;
 import net.jotorren.microservices.rtsba.RegistrationEndpoint;
-import net.jotorren.microservices.rtsba.coordinator.CoordinatorSagaService;
+import net.jotorren.microservices.rtsba.coordinator.saga.CoordinatorSagaService;
 import net.jotorren.microservices.rtsba.protocol.CoordinationContextMessageContentType;
 import net.jotorren.microservices.rtsba.protocol.CoordinationContextProtocol;
 

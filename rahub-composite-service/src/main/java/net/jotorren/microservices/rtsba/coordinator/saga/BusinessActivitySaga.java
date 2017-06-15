@@ -1,4 +1,4 @@
-package net.jotorren.microservices.rtsba.coordinator;
+package net.jotorren.microservices.rtsba.coordinator.saga;
 
 import java.util.HashMap;
 import java.util.Map;

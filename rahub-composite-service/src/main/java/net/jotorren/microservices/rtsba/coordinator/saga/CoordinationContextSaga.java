@@ -1,4 +1,4 @@
-package net.jotorren.microservices.rtsba.coordinator;
+package net.jotorren.microservices.rtsba.coordinator.saga;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -192,7 +192,11 @@ public class CoordinationContextSaga {
 			if (BusinessActivityStatus.COMPLETED.equals(status)){
 				activityProtocol.compensate(this.txId, register.getActivityId(), BusinessActivityMessageType.COMPENSATE);		  
 				if (register.getParticipant().getProtocolEvents().contains(RtsBaMessage.COMPENSATE)){
-					compensate(register.getParticipant().getAddress(), register.getActivityId());
+					try {
+						compensate(register.getParticipant().getAddress(), register.getActivityId());
+					} catch (Exception e){
+						LOG.error("Heuristic compensate error for activity " + register.getActivityId(), e);
+					}
 				} else {
 					// we must generate a COMPENSATED event in order to end the business activity saga
 					this.activityProtocol.compensated(this.txId, register.getActivityId(), BusinessActivityMessageType.COMPENSATED);

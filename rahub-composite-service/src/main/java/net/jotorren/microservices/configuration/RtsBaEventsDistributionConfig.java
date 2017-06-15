@@ -21,8 +21,8 @@ import org.springframework.context.annotation.Configuration;
 
 import com.rabbitmq.client.Channel;
 
-import net.jotorren.microservices.rtsba.coordinator.BusinessActivitySaga;
-import net.jotorren.microservices.rtsba.coordinator.CoordinationContextSaga;
+import net.jotorren.microservices.rtsba.coordinator.saga.BusinessActivitySaga;
+import net.jotorren.microservices.rtsba.coordinator.saga.CoordinationContextSaga;
 import net.jotorren.microservices.rtsba.protocol.amqp.RoutingKeyPropertyResolver;
 
 @Configuration
