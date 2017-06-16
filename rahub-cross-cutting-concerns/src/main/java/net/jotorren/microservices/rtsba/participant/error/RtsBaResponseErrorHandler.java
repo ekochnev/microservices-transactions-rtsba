@@ -27,20 +27,32 @@ public class RtsBaResponseErrorHandler extends DefaultResponseErrorHandler {
 			s.close();
 			if (null == body){
 				LOG.error("Uncontrolled error {}", clienthttpresponse.getRawStatusCode());
-				throw new IOException("Uncontrolled error " + clienthttpresponse.getRawStatusCode());
+				super.handleError(clienthttpresponse);
 			} else {
-				ObjectMapper mapper = new ObjectMapper();
-				ErrorDetails error = mapper.readValue(body, ErrorDetails.class);
+				ErrorDetails error = null;
+				try {
+					ObjectMapper mapper = new ObjectMapper();
+					error = mapper.readValue(body, ErrorDetails.class);
+				} catch(Exception e){
+					LOG.error("Unable to deserialize received error", e);
+					super.handleError(clienthttpresponse);
+					return;
+				}
+				
 				Throwable th = null;
-				if (null != error.getReason()){
+				if (null != error && null != error.getReason()){
 					try {
 						th = (Throwable) JavaSerializer.fromString(error.getReason());
 					} catch (IOException | ClassNotFoundException e) {
 						LOG.error("Unable to deserialize reason of transactional exception", e);
+						super.handleError(clienthttpresponse);
+						return;
 					}
 				}
 				throw new RtsBaException(error.getCode(), error.getMessage(), th);
 			}
+		} else {
+			super.handleError(clienthttpresponse);
 		}
 	}
 }
