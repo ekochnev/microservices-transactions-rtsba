@@ -1,7 +1,5 @@
 package net.jotorren.microservices.rtsba.autoconfigure;
 
-import javax.sql.DataSource;
-
 import org.axonframework.amqp.eventhandling.RoutingKeyResolver;
 import org.axonframework.amqp.eventhandling.spring.SpringAMQPPublisher;
 import org.axonframework.common.jdbc.ConnectionProvider;
@@ -16,7 +14,6 @@ import org.axonframework.eventsourcing.eventstore.jdbc.HsqlEventTableFactory;
 import org.axonframework.eventsourcing.eventstore.jdbc.JdbcEventStorageEngine;
 import org.axonframework.serialization.JavaSerializer;
 import org.axonframework.serialization.Serializer;
-import org.axonframework.spring.jdbc.SpringDataSourceConnectionProvider;
 import org.axonframework.spring.saga.SpringResourceInjector;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -41,9 +38,6 @@ public class RtsBaProtocolAutoConfiguration {
 	
 	@Autowired
 	private RtsBaProtocolProperties configuration;
-	
-	@Autowired
-	private DataSource dataSource;
 
 	// Local BUS and Events storage
 	@Bean
@@ -51,12 +45,6 @@ public class RtsBaProtocolAutoConfiguration {
 	public ResourceInjector resourceInjector() {
 		return new SpringResourceInjector();
 	}
-
-    @Bean
-    @ConditionalOnMissingBean
-    public ConnectionProvider eventConnectionProvider() {
-        return new SpringDataSourceConnectionProvider(dataSource);
-    }
 
     @Bean
     @ConditionalOnMissingBean
@@ -72,8 +60,8 @@ public class RtsBaProtocolAutoConfiguration {
     
     @Bean
     @ConditionalOnMissingBean
-    public EventStorageEngine eventStorageEngine() {
-    	JdbcEventStorageEngine jdbc = new JdbcEventStorageEngine(eventConnectionProvider(), eventTransactionManager());
+    public EventStorageEngine eventStorageEngine(ConnectionProvider eventConnectionProvider) {
+    	JdbcEventStorageEngine jdbc = new JdbcEventStorageEngine(eventConnectionProvider, eventTransactionManager());
 		if (configuration.isGenerateDDL()) {
 			jdbc.createSchema(eventSchemaFactory());
 		}
@@ -82,8 +70,8 @@ public class RtsBaProtocolAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public EventBus sagaLocalBus() {
-        return new EmbeddedEventStore(eventStorageEngine());
+    public EventBus sagaLocalBus(EventStorageEngine eventStorageEngine) {
+        return new EmbeddedEventStore(eventStorageEngine);
     }
     
     // Remote BUS (RabbitMQ)
