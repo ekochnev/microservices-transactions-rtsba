@@ -11,13 +11,24 @@
 	<artifactId>rtsba-coordinator-service</artifactId>
 	<name>rtsba-coordinator-service</name>
 	<description>RTS-BA Coordinator implementation</description>
-	
+
+	<properties>
+		<start-class>net.jotorren.microservices.rtsba.coordinator.RtsBaCoordinatorServiceApplication</start-class>
+	</properties>
+		
 	<dependencies>
 		<dependency>
 			<groupId>net.jotorren.microservices</groupId>
-			<artifactId>rtsba</artifactId>
+			<artifactId>rtsba-spring-boot-starter</artifactId>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<!-- if want to enable the use of the H2 database console, we’ll need to change the scope of the Maven from runtime, to compile -->
+			<!-- scope>runtime</scope -->
+		</dependency>
+				
 		<dependency>
 			<groupId>org.liquibase</groupId>
 			<artifactId>liquibase-core</artifactId>

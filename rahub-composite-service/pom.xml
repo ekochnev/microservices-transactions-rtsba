@@ -14,7 +14,7 @@
 	<description>Spring Boot raHub Composite Service</description>
 
 	<properties>
-		<start-class>net.jotorren.microservices.RahubCompositeServiceApplication</start-class>
+		<start-class>net.jotorren.microservices.composite.RahubCompositeServiceApplication</start-class>
 	</properties>
 	
 	<dependencies>
@@ -29,7 +29,7 @@
 			<!-- if want to enable the use of the H2 database console, we’ll need to change the scope of the Maven from runtime, to compile -->
 			<!-- scope>runtime</scope -->
 		</dependency>
-		
+				
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
