@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+	net.jotorren.microservices.rtsba.autoconfigure.RtsBaAutoConfiguration,\
+	net.jotorren.microservices.rtsba.autoconfigure.RtsBaProtocolAutoConfiguration,\
+	net.jotorren.microservices.rtsba.autoconfigure.RtsBaCacheAutoConfiguration

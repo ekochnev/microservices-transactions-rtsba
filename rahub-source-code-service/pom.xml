@@ -20,7 +20,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>net.jotorren.microservices</groupId>
-			<artifactId>rahub-cross-cutting-concerns</artifactId>
+			<artifactId>rtsba-spring-boot-starter</artifactId>
 		</dependency>
 				
 		<dependency>
