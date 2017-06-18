@@ -1,0 +1,31 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<parent>
+		<groupId>net.jotorren.microservices</groupId>
+		<artifactId>rahub</artifactId>
+		<version>1.0.0</version>
+	</parent>
+	
+	<artifactId>rtsba-coordinator-service</artifactId>
+	<name>rtsba-coordinator-service</name>
+	<description>RTS-BA Coordinator implementation</description>
+	
+	<dependencies>
+		<dependency>
+			<groupId>net.jotorren.microservices</groupId>
+			<artifactId>rtsba</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.liquibase</groupId>
+			<artifactId>liquibase-core</artifactId>
+		</dependency>
+				
+		<dependency>
+		    <groupId>org.quartz-scheduler</groupId>
+		    <artifactId>quartz</artifactId>
+		</dependency>
+	</dependencies>
+</project>

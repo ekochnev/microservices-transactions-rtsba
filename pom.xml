@@ -29,6 +29,7 @@
 		<module>rtsba</module>
 		<module>rtsba-spring-boot-starter</module>
 		<module>rtsba-spring-boot-autoconfigure</module>
+		<module>rtsba-coordinator-service</module>
 	</modules>
 
 	<properties>
