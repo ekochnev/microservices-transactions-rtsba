@@ -321,7 +321,7 @@ public class RtsBaAspect {
     		if (null == this.currentContextUri) {
     			this.isTransactional = false;
     		} else {
-    			throw new RtsBaException("RTS-BA-AOP-11", "NEVER propgation with valid TX ", new InvalidTransactionException(this.currentContextUri));
+    			throw new RtsBaException("RTS-BA-AOP-11", "NEVER propagation with valid TX ", new InvalidTransactionException(this.currentContextUri));
     		}
     	} else if (RtsBaPropagation.MANDATORY.equals(propagation) && null == this.currentContextUri) {
     		throw new RtsBaException("RTS-BA-AOP-12", "MANDATORY propagation with null TX ", new TransactionRequiredException());

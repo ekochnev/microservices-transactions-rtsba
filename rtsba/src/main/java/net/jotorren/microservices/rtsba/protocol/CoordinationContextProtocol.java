@@ -4,8 +4,6 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.transaction.TransactionalException;
-
 import org.axonframework.eventhandling.EventBus;
 import org.axonframework.eventsourcing.GenericDomainEventMessage;
 import org.slf4j.Logger;
@@ -20,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionTimedOutException;
 
 import net.jotorren.microservices.rtsba.CoordinationContextParticipant;
+import net.jotorren.microservices.rtsba.participant.error.RtsBaException;
 import net.jotorren.microservices.rtsba.protocol.event.CoordinationContextCancelEvent;
 import net.jotorren.microservices.rtsba.protocol.event.CoordinationContextCloseEvent;
 import net.jotorren.microservices.rtsba.protocol.event.CoordinationContextCompensateEvent;
@@ -68,13 +67,13 @@ public class CoordinationContextProtocol {
 		try {
 			if (!activeSignal.await(participant.getActivationTimeout(), TimeUnit.MILLISECONDS)){
 				LOG.error("RTS-BA PROTOCOL :: Transaction {} :: Activity {} - no activation received before timeout", txId, event.getActivityId());
-				throw new TransactionalException("RTS-BA PROTOCOL :: Unable to register activity inside TX "+txId, 
-						new TransactionTimedOutException("RTS-BA PROTOCOL :: No activation received"));
+				throw new RtsBaException("RTS-BA-AOP-13", "Unable to register activity inside TX "+txId, 
+						new TransactionTimedOutException("No activation received"));
 			}
 		} catch (InterruptedException e) {
 			LOG.error("RTS-BA PROTOCOL Transaction {} :: Activity {} - {}", txId, event.getActivityId(), e.getMessage());
-			throw new TransactionalException("RTS-BA PROTOCOL :: Unable to register activity inside TX "+txId, 
-					new TransactionTimedOutException("RTS-BA PROTOCOL :: Activation await interrupted"));
+			throw new RtsBaException("RTS-BA-AOP-14", "Unable to register activity inside TX "+txId, 
+					new TransactionTimedOutException("Activation await interrupted"));
 		}
 
 		// Removing the listener causes an error on next redis requests

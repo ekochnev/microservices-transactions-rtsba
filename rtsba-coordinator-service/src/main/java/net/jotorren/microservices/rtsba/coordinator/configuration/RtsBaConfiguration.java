@@ -8,16 +8,10 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import net.jotorren.microservices.rtsba.participant.error.RtsBaControllerExceptionHandler;
 import net.jotorren.microservices.rtsba.participant.error.RtsBaResponseErrorHandler;
 
 @Configuration
 public class RtsBaConfiguration {
-
-	@Bean
-	public RtsBaControllerExceptionHandler rtsBaControllerExceptionHandler() {
-		return new RtsBaControllerExceptionHandler();
-	}
 	
 	@Bean
 	public RestTemplate rtsbaTemplate(RestTemplateBuilder builder) {
