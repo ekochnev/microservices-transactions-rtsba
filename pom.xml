@@ -19,7 +19,7 @@
 	</parent>
 
 	<modules>
-		<module>rahub-cross-cutting-concerns</module>
+		
 		<module>rahub-composite-service</module>
 		<module>rahub-source-code-service</module>
 		<module>rahub-forum-service</module>
@@ -27,9 +27,9 @@
 
 
 		<module>rtsba</module>
+		<module>rtsba-coordinator-service</module>
 		<module>rtsba-spring-boot-starter</module>
 		<module>rtsba-spring-boot-autoconfigure</module>
-		<module>rtsba-coordinator-service</module>
 	</modules>
 
 	<properties>
