@@ -41,7 +41,7 @@ public class ContentController {
 		return this.service.getContent(id);
 	}
 	
-	@RtsBaTransactional(value = RtsBaPropagation.MANDATORY, messages = {RtsBaMessage.CLOSE, RtsBaMessage.COMPENSATE})
+	@RtsBaTransactional(value = RtsBaPropagation.REQUIRED, messages = {RtsBaMessage.CLOSE, RtsBaMessage.COMPENSATE})
 	@RequestMapping(method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> create(HttpServletRequest request, @RequestBody SourceCodeItem data) {
 		LOG.info("Trying to save content...");

@@ -187,6 +187,7 @@ public class RtsBaAspect {
 			        }
 			        LOG.warn("Unable to register activity inside coordination context " + currentContextId, e);
 			        activity = null;
+			        isTransactional = false;
 		        }
 	        }
         }
@@ -220,7 +221,11 @@ public class RtsBaAspect {
     private void afterProceed(BusinessActivity activity) {
     	if (isTransactional){
         	checkContextStatus();
-        	if (!inherited){
+        	if (inherited){
+        		LOG.info("RTS-BA AOP :: Participant execution ends");        		
+        		bap.completed(currentContextId, activity.getIdentifier(), BusinessActivityMessageType.COMPLETED);
+        		ctp.partial(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol(), activity.getIdentifier());
+        	} else {
         		LOG.info("RTS-BA AOP :: Orquestator execution ends");
         		if (requiresNew) {
         			ctp.partial(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol(), activity.getIdentifier());
@@ -229,10 +234,6 @@ public class RtsBaAspect {
         		if (requiresNew) {
         			ctp.resume(suspendedContextId, suspendedClient.protocol());
             	}
-        	} else if (null != activity) {
-        		LOG.info("RTS-BA AOP :: Participant execution ends");        		
-        		bap.completed(currentContextId, activity.getIdentifier(), BusinessActivityMessageType.COMPLETED);
-        		ctp.partial(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol(), activity.getIdentifier());
     		}
     	} else if (suspended) {
 			ctp.resume(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol());
@@ -250,7 +251,7 @@ public class RtsBaAspect {
         			ctp.resume(suspendedContextId, suspendedClient.protocol());
         			return;
             	}
-	    	} if (null != activity && activityDone) {
+	    	} else if (activityDone) {
 	    		LOG.info("RTS-BA AOP :: Participant execution ends");        		
 	    		bap.completed(currentContextId, activity.getIdentifier(), BusinessActivityMessageType.COMPLETED);
 			}
@@ -261,16 +262,16 @@ public class RtsBaAspect {
     private void onInternalException(BusinessActivity activity, boolean activityDone, RtsBaException e){
     	LOG.error("RTS-BA AOP :: ALREADY CAPTURED ERROR");
     	if (isTransactional){
-	    	if (!inherited){
+	    	if (inherited){
+	    		LOG.info("RTS-BA AOP :: Participant execution fails");
+	    		bap.fail(currentContextId, activity.getIdentifier(), BusinessActivityMessageType.FAIL);
+	    	} else {
 				LOG.error("RTS-BA AOP :: Orquestator compensation");
 				ctp.compensate(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol());
         		if (requiresNew) {
         			ctp.resume(suspendedContextId, suspendedClient.protocol());
         			return;
             	}
-	    	} if (null != activity) {
-	    		LOG.info("RTS-BA AOP :: Participant execution fails");
-	    		bap.fail(currentContextId, activity.getIdentifier(), BusinessActivityMessageType.FAIL);
 			}
     	}
 	    throw e;
@@ -279,16 +280,16 @@ public class RtsBaAspect {
     private void onBusinessException(BusinessActivity activity, Exception e) throws Exception{
     	LOG.error("RTS-BA AOP :: BUSINESS ERROR");
     	if (isTransactional){
-	    	if (!inherited){
+	    	if (inherited){
+	    		LOG.info("RTS-BA AOP :: Participant execution fails");
+	    		bap.fail(currentContextId, activity.getIdentifier(), BusinessActivityMessageType.FAIL);
+	    	} else {
 				LOG.error("RTS-BA AOP :: Orquestator compensation");
 				ctp.compensate(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol());
         		if (requiresNew) {
         			ctp.resume(suspendedContextId, suspendedClient.protocol());
         			return;
             	}
-	    	} if (null != activity) {
-	    		LOG.info("RTS-BA AOP :: Participant execution fails");
-	    		bap.fail(currentContextId, activity.getIdentifier(), BusinessActivityMessageType.FAIL);
 			}
     	}
     	throw new RtsBaException("RTS-BA-AOP-9000", "Business error", e);
