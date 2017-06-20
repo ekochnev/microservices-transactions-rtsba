@@ -32,7 +32,7 @@ public class CoordinatorSagaService {
 	}
 	
 	public BusinessActivityStatus getBusinessActivityStatus(String activityInstanceId) {
-		AssociationValue association = new AssociationValue("activityInstanceId", activityInstanceId);
+		AssociationValue association = new AssociationValue(BusinessActivitySaga.ASSOCIATION_PROPERTY, activityInstanceId);
 		Set<String> items = sagaStore.findSagas(BusinessActivitySaga.class, association);
 		if (items.isEmpty()) {
 			return null;
