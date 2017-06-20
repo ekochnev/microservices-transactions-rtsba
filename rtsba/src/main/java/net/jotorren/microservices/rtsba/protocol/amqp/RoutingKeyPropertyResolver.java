@@ -8,6 +8,7 @@ public class RoutingKeyPropertyResolver implements RoutingKeyResolver {
 	private String value;
 	
 	public RoutingKeyPropertyResolver(String value){
+		super();
 		this.value = value;
 	}
 	

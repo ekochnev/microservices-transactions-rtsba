@@ -35,6 +35,7 @@ public class RtsBaClient {
 	}
 	
 	public RtsBaClient(long initialSequence) {
+		super();
 		this.sequence = initialSequence;
 	}
 	

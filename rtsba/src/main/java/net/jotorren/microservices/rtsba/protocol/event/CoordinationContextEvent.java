@@ -8,6 +8,7 @@ public abstract class CoordinationContextEvent implements Serializable {
 	private String coordinationContextId;
 	
 	public CoordinationContextEvent(String coordinationContextId){
+		super();
 		this.coordinationContextId = coordinationContextId;
 	}
 

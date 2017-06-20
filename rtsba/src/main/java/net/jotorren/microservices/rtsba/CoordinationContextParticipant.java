@@ -18,6 +18,7 @@ public class CoordinationContextParticipant implements Serializable {
 	private long timeStamp;
 	
 	public CoordinationContextParticipant() {
+		super();
 		this.timeStamp = System.currentTimeMillis();
 	}
 	
