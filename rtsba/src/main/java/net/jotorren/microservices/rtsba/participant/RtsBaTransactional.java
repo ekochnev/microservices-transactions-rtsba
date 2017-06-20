@@ -14,7 +14,7 @@ import net.jotorren.microservices.rtsba.protocol.RtsBaMessage;
 public @interface RtsBaTransactional {
 
 	RtsBaPropagation value() default RtsBaPropagation.REQUIRED; 
-	RtsBaMessage[] messages() default RtsBaMessage.ALL;
+	RtsBaMessage[] messages() default RtsBaMessage.NONE;
 	String path() default "";
 	long timeout() default -1;
 	boolean strict() default true;
