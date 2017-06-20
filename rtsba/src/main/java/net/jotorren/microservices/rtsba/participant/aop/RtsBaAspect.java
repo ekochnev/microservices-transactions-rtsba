@@ -359,10 +359,10 @@ public class RtsBaAspect {
         	inherited = false;
         } else if (RtsBaPropagation.REQUIRES_NEW.equals(propagation)) {
         	inherited = false;
-        	requiresNew = true;
         	if (null != currentContextUri) {
-        		ctp.suspend(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol());
+        		requiresNew = true;
         		suspended = true;
+        		ctp.suspend(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol());
         	}
         } else if (RtsBaPropagation.SUPPORTS.equals(propagation) && null == currentContextUri) {
         	isTransactional = false;
