@@ -78,7 +78,6 @@ public class RtsBaAspect {
 	
 	private boolean isTransactional = true;
 	private boolean inherited = true;
-	private boolean requiresNew = false;
 	private boolean suspended = false;
 	
 	private long timeout = -1;
@@ -169,15 +168,7 @@ public class RtsBaAspect {
         
         BusinessActivity activity = null;
         if (isTransactional) {
-        	if (!inherited) {
-	        	try {
-	        		activateContext();
-		        } catch (Exception e) {
-			        throw new RtsBaException("RTS-BA-AOP-0020", "Unable to activate coordination context", e);
-		        }        		
-        	}
-        	
-	        if (inherited || requiresNew) {
+        	if (inherited) {
 	        	configureAsParticipant(request, method.getAnnotation(RequestMapping.class), transactional);
 		        try {
 		        	activity = registerParticipant();
@@ -188,8 +179,15 @@ public class RtsBaAspect {
 			        LOG.warn("Unable to register activity inside coordination context " + currentContextId, e);
 			        activity = null;
 			        isTransactional = false;
-		        }
-	        }
+			        ThreadLocalContext.put(RtsBaClient.RTSBA_TRANSACTIONAL, Boolean.valueOf(isTransactional));
+		        }      		
+        	} else {
+	        	try {
+	        		activateContext();
+		        } catch (Exception e) {
+			        throw new RtsBaException("RTS-BA-AOP-0020", "Unable to activate coordination context", e);
+		        }          		
+        	}
         }
         
         boolean activityDone = false;
@@ -227,11 +225,8 @@ public class RtsBaAspect {
         		ctp.partial(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol(), activity.getIdentifier());
         	} else {
         		LOG.info("RTS-BA AOP :: Orquestator execution ends");
-        		if (requiresNew) {
-        			ctp.partial(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol(), activity.getIdentifier());
-            	}
         		ctp.close(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol());
-        		if (requiresNew) {
+        		if (suspended) {
         			ctp.resume(suspendedContextId, suspendedClient.protocol());
             	}
     		}
@@ -247,7 +242,7 @@ public class RtsBaAspect {
 	    	if (!inherited){
 				LOG.error("RTS-BA AOP :: Orquestator compensation");
 				ctp.compensate(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol());
-        		if (requiresNew) {
+        		if (suspended) {
         			ctp.resume(suspendedContextId, suspendedClient.protocol());
         			return;
             	}
@@ -268,7 +263,7 @@ public class RtsBaAspect {
 	    	} else {
 				LOG.error("RTS-BA AOP :: Orquestator compensation");
 				ctp.compensate(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol());
-        		if (requiresNew) {
+        		if (suspended) {
         			ctp.resume(suspendedContextId, suspendedClient.protocol());
         			return;
             	}
@@ -286,7 +281,7 @@ public class RtsBaAspect {
 	    	} else {
 				LOG.error("RTS-BA AOP :: Orquestator compensation");
 				ctp.compensate(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol());
-        		if (requiresNew) {
+        		if (suspended) {
         			ctp.resume(suspendedContextId, suspendedClient.protocol());
         			return;
             	}
@@ -344,7 +339,6 @@ public class RtsBaAspect {
     private void checkPropagation(RtsBaPropagation propagation) {
     	isTransactional = true;
     	inherited = true;
-    	requiresNew = false;
     	suspended = false;
     	
     	if (RtsBaPropagation.NEVER.equals(propagation)) {
@@ -360,7 +354,6 @@ public class RtsBaAspect {
         } else if (RtsBaPropagation.REQUIRES_NEW.equals(propagation)) {
         	inherited = false;
         	if (null != currentContextUri) {
-        		requiresNew = true;
         		suspended = true;
         		ctp.suspend(currentContextId, ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class).protocol());
         	}
@@ -376,14 +369,13 @@ public class RtsBaAspect {
     	
     	LOG.info("RTS-BA AOP :: Transactional {}", isTransactional);
     	LOG.info("RTS-BA AOP :: Inherited {}", inherited);
-    	LOG.info("RTS-BA AOP :: RequiresNew {}", requiresNew);
     	ThreadLocalContext.put(RtsBaClient.RTSBA_TRANSACTIONAL, Boolean.valueOf(isTransactional));
     }
 
     private void activateContext() throws JsonProcessingException {
 		LOG.info("RTS-BA AOP :: Calling activation service provided by RTS-BA Coordinator");
 
-		if (requiresNew){
+		if (suspended){
 			suspendedClient = ThreadLocalContext.get(RtsBaClient.RTSBA_CLIENT, RtsBaClient.class);
 			suspendedContextId = currentContextId;
 		}
@@ -425,14 +417,11 @@ public class RtsBaAspect {
         LOG.info("RTS-BA AOP :: Participant url {} ", participantUrl);
         
         protocol = Arrays.asList(transactional.messages());
-        if (protocol.contains(RtsBaMessage.NONE) ||
-        		!ThreadLocalContext.get(RtsBaClient.RTSBA_TRANSACTIONAL, Boolean.class).booleanValue()){
-        	// TODO Test that option
+        if (protocol.contains(RtsBaMessage.NONE) || !isTransactional){
         	// An empty list of protocol messages, means NO transaction management could be done
         	protocol = new ArrayList<>();
         	LOG.info("RTS-BA AOP :: Participant with no protocol messages");
         } else if (protocol.contains(RtsBaMessage.ALL)){
-        	// TODO Test that option
         	protocol = new ArrayList<>();
         	protocol.add(RtsBaMessage.CANCEL);
         	protocol.add(RtsBaMessage.CLOSE);
