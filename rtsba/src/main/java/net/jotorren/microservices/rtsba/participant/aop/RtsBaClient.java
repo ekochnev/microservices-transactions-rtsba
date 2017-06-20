@@ -12,8 +12,8 @@ public class RtsBaClient {
 	public static final String RTSBA_CLIENT 		= "rtsba.client";
 	public static final String RTSBA_TRANSACTIONAL 	= "rtsba.transactional";
 	public static final String RTSBA_CONTEXT_URI 	= "rtsba.context.uri";
+	public static final String RTSBA_CONTEXT_ID 	= "rtsba.context.id";
 	public static final String RTSBA_REGISTRATION 	= "rtsba.registration";
-	public static final String RTSBA_TRANSACTION_ID = "rtsba.transaction.id";
 	
 	private long sequence = 0;
 	

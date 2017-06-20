@@ -17,6 +17,5 @@ public @interface RtsBaTransactional {
 	RtsBaMessage[] messages() default RtsBaMessage.ALL;
 	String path() default "";
 	long timeout() default -1;
-	long activationTimeout() default -1;
 	boolean strict() default true;
 }

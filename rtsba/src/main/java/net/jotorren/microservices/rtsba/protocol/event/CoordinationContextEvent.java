@@ -5,13 +5,13 @@ import java.io.Serializable;
 public abstract class CoordinationContextEvent implements Serializable {
 	private static final long serialVersionUID = -2669420125302845403L;
 
-	private String compositeTransactionId;
+	private String coordinationContextId;
 	
-	public CoordinationContextEvent(String compositeTransactionId){
-		this.compositeTransactionId = compositeTransactionId;
+	public CoordinationContextEvent(String coordinationContextId){
+		this.coordinationContextId = coordinationContextId;
 	}
 
-	public String getCompositeTransactionId() {
-		return compositeTransactionId;
+	public String getCoordinationContextId() {
+		return this.coordinationContextId;
 	}
 }

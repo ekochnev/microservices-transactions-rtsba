@@ -8,11 +8,10 @@ public class BusinessActivityActivationEvent extends BusinessActivityEvent {
 	private CoordinationContextParticipant participant;
 	
 	public BusinessActivityActivationEvent(
-			String transactionIdentifier, 
+			String coordinationContextId, 
 			String activityId, 
-			CoordinationContextParticipant participant,
-			long txSeqNumber) {
-		super(transactionIdentifier, activityId);
+			CoordinationContextParticipant participant) {
+		super(coordinationContextId, activityId);
 		this.participant = participant;
 	}
 

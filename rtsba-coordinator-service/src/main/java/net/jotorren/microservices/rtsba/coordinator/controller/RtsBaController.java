@@ -45,43 +45,43 @@ public class RtsBaController {
 	@RequestMapping(value = "/activation", method = RequestMethod.POST, 
 			consumes = CoordinationContextMessageContentType.RTSBA_CONTENT_TYPE)
 	public ResponseEntity<CoordinationContext> activate(@RequestBody CreateCoordinationContext data) throws URISyntaxException {
-		LOG.info("RTS-BA CRTL :: Trying to open a new coordination context...");
+		LOG.info("RTS-BA CRTL :: Opening a new coordination context...");
 
-		String txid = ctp.open(data.getExpires());
+		String coordCtxId = ctp.open(data.getExpires());
 
-		CoordinationContext txContext = new CoordinationContext();
-		txContext.setCoordinationType(WS_C_COORDINATION_TYPE);
-		txContext.setIdentifier(txid);
+		CoordinationContext coordCtx = new CoordinationContext();
+		coordCtx.setCoordinationType(WS_C_COORDINATION_TYPE);
+		coordCtx.setIdentifier(coordCtxId);
 		
 		RegistrationEndpoint registration = new RegistrationEndpoint();
 		registration.setMethod(HttpMethod.PUT);
 		registration.setContentType(CoordinationContextMessageContentType.RTSBA_REGISTER_CONTENT_TYPE);
-		registration.setAddress(this.configuration.getEndpoint() + this.configuration.getRegistrationUri() + "/" + txContext.getIdentifier());
-		txContext.setRegistration(registration);
+		registration.setAddress(this.configuration.getEndpoint() + this.configuration.getRegistrationUri() + "/" + coordCtx.getIdentifier());
+		coordCtx.setRegistration(registration);
 		
 		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(new URI(this.configuration.getEndpoint() + "/" + txContext.getIdentifier()));
-		return new ResponseEntity<CoordinationContext>(txContext, headers, HttpStatus.CREATED);
+		headers.setLocation(new URI(this.configuration.getEndpoint() + "/" + coordCtx.getIdentifier()));
+		return new ResponseEntity<CoordinationContext>(coordCtx, headers, HttpStatus.CREATED);
 	}
 
-	@RequestMapping(value = "/registration/{txid}/{sequence}", method = RequestMethod.PUT, 
+	@RequestMapping(value = "/registration/{coordCtxId}/{sequence}", method = RequestMethod.PUT, 
 			consumes = CoordinationContextMessageContentType.RTSBA_REGISTER_CONTENT_TYPE)
-	public ResponseEntity<BusinessActivity> register(@PathVariable String txid, @PathVariable String sequence, 
+	public ResponseEntity<BusinessActivity> register(@PathVariable String coordCtxId, @PathVariable String sequence, 
 			@RequestBody CoordinationContextParticipant data) throws URISyntaxException {
-		LOG.info("RTS-BA CRTL :: Trying to register a new participant inside a coordination context...");
+		LOG.info("RTS-BA CRTL :: Registering a new participant inside coordination context...");
 
-		String activityId = ctp.register(txid, Long.parseLong(sequence), data);
+		String activityId = ctp.register(coordCtxId, Long.parseLong(sequence), data);
 		
 		BusinessActivity activity = new BusinessActivity(activityId);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(new URI(this.configuration.getEndpoint() + "/" + txid + "/" + activityId));
+		headers.setLocation(new URI(this.configuration.getEndpoint() + "/" + coordCtxId + "/" + activityId));
 		return new ResponseEntity<BusinessActivity>(activity, headers, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/closed/{txid}", method = RequestMethod.GET)
-	public ResponseEntity<Boolean> closed(@PathVariable String txid) {
-		LOG.info("RTS-BA CRTL :: Verifying if the coordination context has been closed (for example due a timeout)");
+	@RequestMapping(value = "/closed/{coordCtxId}", method = RequestMethod.GET)
+	public ResponseEntity<Boolean> closed(@PathVariable String coordCtxId) {
+		LOG.info("RTS-BA CRTL :: Verifying coordination context status {}", coordCtxId);
 		
-		return new ResponseEntity<Boolean>(Boolean.valueOf(sagas.isCompositeTransactionClosed(txid)), null, HttpStatus.OK);
+		return new ResponseEntity<Boolean>(Boolean.valueOf(sagas.isCoordinationContextClosed(coordCtxId)), null, HttpStatus.OK);
 	}
 }

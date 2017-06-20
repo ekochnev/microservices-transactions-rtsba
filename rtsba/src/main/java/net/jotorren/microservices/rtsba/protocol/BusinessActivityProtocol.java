@@ -31,115 +31,128 @@ public class BusinessActivityProtocol {
 	@Autowired
 	private EventBus sagaBus;
 	
-	public void activation(String txId, String activityId, CoordinationContextParticipant participant, long actSeqNumber){
-		BusinessActivityActivationEvent event = new BusinessActivityActivationEvent(txId, activityId, participant, actSeqNumber);
+	public void activation(String coordCtxId, String activityId, CoordinationContextParticipant participant, long activitySequence){
+		BusinessActivityActivationEvent event = new BusinessActivityActivationEvent(coordCtxId, activityId, participant);
 		
 		GenericDomainEventMessage<BusinessActivityActivationEvent> msg = 
-				new GenericDomainEventMessage<>("ba-activation", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-activation", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 	
-	public void cancel(String txId, String activityId, long actSeqNumber){
-		BusinessActivityCancelEvent event = new BusinessActivityCancelEvent(txId, activityId);
+	public void cancel(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityCancelEvent event = new BusinessActivityCancelEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityCancelEvent> msg = 
-				new GenericDomainEventMessage<>("ba-cancel", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-cancel", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 
-	public void canceled(String txId, String activityId, long actSeqNumber){
-		BusinessActivityCanceledEvent event = new BusinessActivityCanceledEvent(txId, activityId);
+	public void canceled(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityCanceledEvent event = new BusinessActivityCanceledEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityCanceledEvent> msg = 
-				new GenericDomainEventMessage<>("ba-canceled", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-canceled", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 
-	public void cannotComplete(String txId, String activityId, long actSeqNumber){
-		BusinessActivityCannotCompleteEvent event = new BusinessActivityCannotCompleteEvent(txId, activityId);
+	public void cannotComplete(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityCannotCompleteEvent event = new BusinessActivityCannotCompleteEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityCannotCompleteEvent> msg = 
-				new GenericDomainEventMessage<>("ba-cannotComplete", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-cannotComplete", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 	
-	public void close(String txId, String activityId, long actSeqNumber){
-		BusinessActivityCloseEvent event = new BusinessActivityCloseEvent(txId, activityId);
+	public void close(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityCloseEvent event = new BusinessActivityCloseEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityCloseEvent> msg = 
-				new GenericDomainEventMessage<>("ba-close", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-close", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 
-	public void closed(String txId, String activityId, long actSeqNumber){
-		BusinessActivityClosedEvent event = new BusinessActivityClosedEvent(txId, activityId);
+	public void closed(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityClosedEvent event = new BusinessActivityClosedEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityClosedEvent> msg = 
-				new GenericDomainEventMessage<>("ba-closed", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-closed", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 	
-	public void compensate(String txId, String activityId, long actSeqNumber){
-		BusinessActivityCompensateEvent event = new BusinessActivityCompensateEvent(txId, activityId);
+	public void compensate(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityCompensateEvent event = new BusinessActivityCompensateEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityCompensateEvent> msg = 
-				new GenericDomainEventMessage<>("ba-compensate", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-compensate", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 
-	public void compensated(String txId, String activityId, long actSeqNumber){
-		BusinessActivityCompensatedEvent event = new BusinessActivityCompensatedEvent(txId, activityId);
+	public void compensated(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityCompensatedEvent event = new BusinessActivityCompensatedEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityCompensatedEvent> msg = 
-				new GenericDomainEventMessage<>("ba-compensated", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-compensated", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 	
-	public void completed(String txId, String activityId, long actSeqNumber){
-		BusinessActivityCompletedEvent event = new BusinessActivityCompletedEvent(txId, activityId);
+	public void completed(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityCompletedEvent event = new BusinessActivityCompletedEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityCompletedEvent> msg = 
-				new GenericDomainEventMessage<>("ba-completed", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-completed", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 	
-	public void exit(String txId, String activityId, long actSeqNumber){
-		BusinessActivityExitEvent event = new BusinessActivityExitEvent(txId, activityId);
+	public void exit(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityExitEvent event = new BusinessActivityExitEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityExitEvent> msg = 
-				new GenericDomainEventMessage<>("ba-exit", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-exit", event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 
-	public void exited(String txId, String activityId, long actSeqNumber){
-		BusinessActivityExitedEvent event = new BusinessActivityExitedEvent(txId, activityId);
+	public void exited(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityExitedEvent event = new BusinessActivityExitedEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityExitedEvent> msg = 
-				new GenericDomainEventMessage<>("ba-exited", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-exited", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 
-	public void fail(String txId, String activityId, long actSeqNumber){
-		BusinessActivityFailEvent event = new BusinessActivityFailEvent(txId, activityId);
+	public void fail(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityFailEvent event = new BusinessActivityFailEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityFailEvent> msg = 
-				new GenericDomainEventMessage<>("ba-fail", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-fail", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 
-	public void failed(String txId, String activityId, long actSeqNumber){
-		BusinessActivityFailedEvent event = new BusinessActivityFailedEvent(txId, activityId);
+	public void failed(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityFailedEvent event = new BusinessActivityFailedEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityFailedEvent> msg = 
-				new GenericDomainEventMessage<>("ba-failed", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-failed", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 
-	public void notCompleted(String txId, String activityId, long actSeqNumber){
-		BusinessActivityNotCompletedEvent event = new BusinessActivityNotCompletedEvent(txId, activityId);
+	public void notCompleted(String coordCtxId, String activityId, long activitySequence){
+		BusinessActivityNotCompletedEvent event = new BusinessActivityNotCompletedEvent(coordCtxId, activityId);
 		
 		GenericDomainEventMessage<BusinessActivityNotCompletedEvent> msg = 
-				new GenericDomainEventMessage<>("ba-notCompleted", event.getActivityInstanceId(), actSeqNumber, event);
+				new GenericDomainEventMessage<>("ba-notCompleted", 
+						event.getActivityInstanceId(), activitySequence, event);
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 }

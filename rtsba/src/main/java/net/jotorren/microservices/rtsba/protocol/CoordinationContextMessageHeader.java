@@ -6,9 +6,9 @@ import java.util.regex.Pattern;
 public interface CoordinationContextMessageHeader {
 
 	String RTSBA_CONTEXT  			= "Link";
-	String RTSBA_CONTEXT_RELATION 	= "rel=\"rtsba-transaction\"";
-	String RTSBA_REGISTER 			= "RTS-BA-Register";
-	String RTSBA_SEQUENCE 			= "RTS-BA-Sequence";
+	String RTSBA_CONTEXT_RELATION 	= "rel=\"RTSBA-coordination-context\"";
+	String RTSBA_REGISTER 			= "RTSBA-register";
+	String RTSBA_SEQUENCE 			= "RTSBA-sequence";
 	
 	static String getTxContextUri(String header){
 		 Pattern p = Pattern.compile("<.*?>; " + RTSBA_CONTEXT_RELATION);

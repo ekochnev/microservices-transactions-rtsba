@@ -11,7 +11,6 @@ public class CoordinationContextParticipant implements Serializable {
 	
 	private String address;
 	private List<RtsBaMessage> protocolEvents;
-	private long activationTimeout = -1;
 	
 	// the hashcode depends on the timestamp which is immutable
 	// two participants with the same address will have different hashes
@@ -42,13 +41,4 @@ public class CoordinationContextParticipant implements Serializable {
 	public int hashCode() {
 		return Objects.hash(address, timeStamp, protocolEvents);
 	}
-
-	public long getActivationTimeout() {
-		return activationTimeout;
-	}
-
-	public void setActivationTimeout(long activationTimeout) {
-		this.activationTimeout = activationTimeout;
-	}
-
 }

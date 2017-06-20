@@ -5,8 +5,8 @@ public class CoordinationContextTimeoutEvent extends CoordinationContextEvent {
 
 	private long timeout;
 	
-	public CoordinationContextTimeoutEvent(String transactionIdentifier, long timeout) {
-		super(transactionIdentifier);
+	public CoordinationContextTimeoutEvent(String coordinationContextId, long timeout) {
+		super(coordinationContextId);
 		this.timeout = timeout;
 	}
 

@@ -5,8 +5,8 @@ public class CoordinationContextPartialEvent extends CoordinationContextEvent {
 
 	private String stepIdentifier;
 	
-	public CoordinationContextPartialEvent(String transactionIdentifier, String stepIdentifier) {
-		super(transactionIdentifier);
+	public CoordinationContextPartialEvent(String coordinationContextId, String stepIdentifier) {
+		super(coordinationContextId);
 		this.stepIdentifier = stepIdentifier;
 	}
 

@@ -53,7 +53,7 @@ public class ContentController {
 		return new ResponseEntity<Void>(null, headersResp, HttpStatus.CREATED);	
 	}
 
-	@RtsBaTransactional(value = RtsBaPropagation.NOT_SUPPORTED)
+	@RtsBaTransactional(value = RtsBaPropagation.REQUIRES_NEW)
 	@RequestMapping(value = "/noTx", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> createNoTx(HttpServletRequest request, @RequestBody SourceCodeItem data) {
 		LOG.info("Trying to save content...");

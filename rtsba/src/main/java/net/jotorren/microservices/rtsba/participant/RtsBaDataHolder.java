@@ -24,17 +24,17 @@ public class RtsBaDataHolder {
     }
     
 	public void put(String key, Object value) {
-		String txid = ThreadLocalContext.get(RtsBaClient.RTSBA_TRANSACTION_ID, String.class);
+		String txid = ThreadLocalContext.get(RtsBaClient.RTSBA_CONTEXT_ID, String.class);
 		this.hashOps.put(txid, key, value);
 	}
 
 	public Object get(String key) {
-		String txid = ThreadLocalContext.get(RtsBaClient.RTSBA_TRANSACTION_ID, String.class);
+		String txid = ThreadLocalContext.get(RtsBaClient.RTSBA_CONTEXT_ID, String.class);
 		return this.hashOps.get(txid, key);
 	}
 
 	public void delete(String key) {
-		String txid = ThreadLocalContext.get(RtsBaClient.RTSBA_TRANSACTION_ID, String.class);
+		String txid = ThreadLocalContext.get(RtsBaClient.RTSBA_CONTEXT_ID, String.class);
 		this.hashOps.delete(txid, key);
 	}
 }

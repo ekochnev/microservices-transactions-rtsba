@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionTimedOutException;
 
 import net.jotorren.microservices.rtsba.CoordinationContextParticipant;
+import net.jotorren.microservices.rtsba.RtsBaProperties;
 import net.jotorren.microservices.rtsba.participant.error.RtsBaException;
 import net.jotorren.microservices.rtsba.protocol.event.CoordinationContextCancelEvent;
 import net.jotorren.microservices.rtsba.protocol.event.CoordinationContextCloseEvent;
@@ -35,90 +36,130 @@ public class CoordinationContextProtocol {
 	private transient static final Logger LOG = LoggerFactory.getLogger(CoordinationContextProtocol.class);
 	
 	@Autowired
+	private RtsBaProperties configuration;
+	
+	@Autowired
 	private EventBus sagaBus;
 	
 	@Autowired
 	private RedisMessageListenerContainer redis;
 	
+	private CountDownLatch openSignal = new CountDownLatch(1);
 	private CountDownLatch activeSignal = new CountDownLatch(1);
 	
 	public String open(long timeout){
-		String txId = UUID.randomUUID().toString();
+		String coordCtxId = UUID.randomUUID().toString();
 		
 		GenericDomainEventMessage<CoordinationContextOpenEvent> msg = 
-				new GenericDomainEventMessage<>("rts-open", txId, 0, new CoordinationContextOpenEvent(txId, timeout));
+				new GenericDomainEventMessage<>("rts-open", coordCtxId, 0, new CoordinationContextOpenEvent(coordCtxId, timeout));
 		sagaBus.publish(msg);
+
+		// TODO Consider moving the response queue from REDIS to RabbitMQ
+		MessageListenerAdapter lsnr = new MessageListenerAdapter(this, "handleOpen");
+		lsnr.afterPropertiesSet();
+		redis.addMessageListener(lsnr, new ChannelTopic(coordCtxId));
 		
-		return txId;
+		try {
+			LOG.info("RTS-BA PROTOCOL :: Waiting (max {}) for coordination context {} open", configuration.getOpenTimeout(), coordCtxId);
+			if (!openSignal.await(configuration.getOpenTimeout(), TimeUnit.MILLISECONDS)){
+				LOG.error("RTS-BA PROTOCOL :: Coordination context {} not opened before timeout", coordCtxId);
+				throw new RtsBaException("RTS-BA-AOP-21", "Unable to open coordination context "+coordCtxId, 
+						new TransactionTimedOutException("No open response received"));
+			}
+		} catch (InterruptedException e) {
+			LOG.error("RTS-BA PROTOCOL :: Coordination context {} - {}", coordCtxId, e.getMessage());
+			throw new RtsBaException("RTS-BA-AOP-22", "Unable to open coordination context "+coordCtxId, 
+					new TransactionTimedOutException("Open await interrupted"));
+		}
+		
+		openSignal = new CountDownLatch(1);
+		LOG.info("RTS-BA PROTOCOL :: Coordination context {} open", coordCtxId);
+		return coordCtxId;
 	}
 
-	public String register(String txId, long txSeqNumber, CoordinationContextParticipant participant){
-		CoordinationContextRegistrationEvent event = new CoordinationContextRegistrationEvent(txId, participant);
+	public String register(String coordCtxId, long coordCtxSequence, CoordinationContextParticipant participant){
+		CoordinationContextRegistrationEvent event = new CoordinationContextRegistrationEvent(coordCtxId, participant);
 		
 		GenericDomainEventMessage<CoordinationContextRegistrationEvent> msg = 
-				new GenericDomainEventMessage<>("rts-registration", txId, txSeqNumber, event);
+				new GenericDomainEventMessage<>("rts-registration", coordCtxId, coordCtxSequence, event);
 		sagaBus.publish(msg);
 		
 		// TODO Consider moving the response queue from REDIS to RabbitMQ
-		MessageListenerAdapter lsnr = new MessageListenerAdapter(this, "handle");
+		MessageListenerAdapter lsnr = new MessageListenerAdapter(this, "handleActivation");
 		lsnr.afterPropertiesSet();
-		redis.addMessageListener(lsnr, new ChannelTopic(txId + "-" + event.getActivityId()));
+		redis.addMessageListener(lsnr, new ChannelTopic(coordCtxId + "-" + event.getActivityId()));
 		
 		try {
-			if (!activeSignal.await(participant.getActivationTimeout(), TimeUnit.MILLISECONDS)){
-				LOG.error("RTS-BA PROTOCOL :: Transaction {} :: Activity {} - no activation received before timeout", txId, event.getActivityId());
-				throw new RtsBaException("RTS-BA-AOP-13", "Unable to register activity inside TX "+txId, 
+			LOG.info("RTS-BA PROTOCOL :: Waiting (max {}) for coordination context {} :: Activity {} activation", 
+					configuration.getActivationTimeout(), coordCtxId, event.getActivityId());
+			if (!activeSignal.await(configuration.getActivationTimeout(), TimeUnit.MILLISECONDS)){
+				LOG.error("RTS-BA PROTOCOL :: Coordination context {} :: Activity {} - no activation received before timeout", coordCtxId, event.getActivityId());
+				throw new RtsBaException("RTS-BA-AOP-31", "Unable to register activity inside coordination context "+coordCtxId, 
 						new TransactionTimedOutException("No activation received"));
 			}
 		} catch (InterruptedException e) {
-			LOG.error("RTS-BA PROTOCOL Transaction {} :: Activity {} - {}", txId, event.getActivityId(), e.getMessage());
-			throw new RtsBaException("RTS-BA-AOP-14", "Unable to register activity inside TX "+txId, 
+			LOG.error("RTS-BA PROTOCOL Coordination context {} :: Activity {} - {}", coordCtxId, event.getActivityId(), e.getMessage());
+			throw new RtsBaException("RTS-BA-AOP-32", "Unable to register activity inside coordination context "+coordCtxId, 
 					new TransactionTimedOutException("Activation await interrupted"));
 		}
 
 		// Removing the listener causes an error on next redis requests
+		activeSignal = new CountDownLatch(1);
+		LOG.info("RTS-BA PROTOCOL :: Coordination context {} :: Activity {} active", coordCtxId, event.getActivityId());
 		return event.getActivityId();
 	}
 
 	// TODO The message should be a typed object with its own properties
-    public void handle(String message) {
+    public void handleOpen(String message) {
+    	LOG.info("RTS-BA PROTOCOL :: Received <{}>", message);
+    	openSignal.countDown();
+    }
+    
+	// TODO The message should be a typed object with its own properties
+    public void handleActivation(String message) {
     	LOG.info("RTS-BA PROTOCOL :: Received <{}>", message);
     	activeSignal.countDown();
     }
     
-	public void partial(String txId, long txSeqNumber, String partialId){
+	public void partial(String coordCtxId, long coordCtxSequence, String partialId){
 		GenericDomainEventMessage<CoordinationContextPartialEvent> msg = 
-				new GenericDomainEventMessage<>("rts-partial", txId, txSeqNumber, new CoordinationContextPartialEvent(txId, partialId));
+				new GenericDomainEventMessage<>("rts-partial", coordCtxId, coordCtxSequence, 
+						new CoordinationContextPartialEvent(coordCtxId, partialId));
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 
-	public void suspend(String txId, long txSeqNumber){
+	public void suspend(String coordCtxId, long coordCtxSequence){
 		GenericDomainEventMessage<CoordinationContextSuspendEvent> msg = 
-				new GenericDomainEventMessage<>("rts-suspend", txId, txSeqNumber, new CoordinationContextSuspendEvent(txId));
+				new GenericDomainEventMessage<>("rts-suspend", coordCtxId, coordCtxSequence, 
+						new CoordinationContextSuspendEvent(coordCtxId));
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 	
-	public void resume(String txId, long txSeqNumber){
+	public void resume(String coordCtxId, long coordCtxSequence){
 		GenericDomainEventMessage<CoordinationContextResumeEvent> msg = 
-				new GenericDomainEventMessage<>("rts-resume", txId, txSeqNumber, new CoordinationContextResumeEvent(txId));
+				new GenericDomainEventMessage<>("rts-resume", coordCtxId, coordCtxSequence, 
+						new CoordinationContextResumeEvent(coordCtxId));
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 	
-	public void cancel(String txId, long txSeqNumber){
+	public void cancel(String coordCtxId, long coordCtxSequence){
 		GenericDomainEventMessage<CoordinationContextCancelEvent> msg = 
-				new GenericDomainEventMessage<>("rts-cancel", txId, txSeqNumber, new CoordinationContextCancelEvent(txId));
+				new GenericDomainEventMessage<>("rts-cancel", coordCtxId, coordCtxSequence, 
+						new CoordinationContextCancelEvent(coordCtxId));
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 	
-	public void close(String txId, long txSeqNumber){
+	public void close(String coordCtxId, long coordCtxSequence){
 		GenericDomainEventMessage<CoordinationContextCloseEvent> msg = 
-				new GenericDomainEventMessage<>("rts-close", txId, txSeqNumber, new CoordinationContextCloseEvent(txId));
+				new GenericDomainEventMessage<>("rts-close", coordCtxId, coordCtxSequence, 
+						new CoordinationContextCloseEvent(coordCtxId));
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 
-	public void compensate(String txId, long txSeqNumber){
+	public void compensate(String coordCtxId, long coordCtxSequence){
 		GenericDomainEventMessage<CoordinationContextCompensateEvent> msg = 
-				new GenericDomainEventMessage<>("rts-compensate", txId, txSeqNumber, new CoordinationContextCompensateEvent(txId));
+				new GenericDomainEventMessage<>("rts-compensate", coordCtxId, coordCtxSequence, 
+						new CoordinationContextCompensateEvent(coordCtxId));
 		sagaBus.publish(GenericDomainEventMessage.asEventMessage(msg));
 	}
 }

@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -46,6 +47,8 @@ import net.jotorren.microservices.rtsba.protocol.event.CoordinationContextTimeou
 @Saga
 public class CoordinationContextSaga {
 
+	public transient static final String ASSOCIATION_PROPERTY = "coordinationContextId";
+	
 	private transient static final Logger LOG = LoggerFactory.getLogger(CoordinationContextSaga.class);
 
 	@Autowired
@@ -56,6 +59,9 @@ public class CoordinationContextSaga {
 
 	@Autowired
 	private transient CoordinatorSagaService sagaService;
+
+	@Autowired
+	private transient StringRedisTemplate redis;
 	
 	@Autowired
 	@Qualifier("rtsbaTemplate")
@@ -64,7 +70,7 @@ public class CoordinationContextSaga {
 	@Autowired
 	private transient BusinessActivityProtocol activityProtocol;
 	
-	private String txId;
+	private String coordCtxId;
 	private String lastStep;
 	private boolean expired = false;
 	private long timeout = -1;
@@ -74,15 +80,15 @@ public class CoordinationContextSaga {
 	private List<CoordinationContextRegistrationEvent> stack = new ArrayList<>();
 	
 	private void scheduleTimeout() {
-		if (this.timeout >= 0) {
-//			this.timeoutToken = scheduler.schedule(Duration.ofMillis(this.timeout), 
-//			new CoordinationContextTimeoutEvent(this.txId, this.timeout));
+		if (timeout >= 0) {
+//			timeoutToken = scheduler.schedule(Duration.ofMillis(timeout), 
+//			new CoordinationContextTimeoutEvent(txId, timeout));
 			
 	    	// TODO type and sequence are not stored in the events table
 			GenericDomainEventMessage<CoordinationContextTimeoutEvent> msg = 
-					new GenericDomainEventMessage<>("rts-timeout", this.txId, -1, 
-							new CoordinationContextTimeoutEvent(this.txId, this.timeout));
-	    	this.timeoutToken = this.scheduler.schedule(Duration.ofMillis(this.timeout), msg);
+					new GenericDomainEventMessage<>("rts-timeout", coordCtxId, -1, 
+							new CoordinationContextTimeoutEvent(coordCtxId, timeout));
+	    	timeoutToken = scheduler.schedule(Duration.ofMillis(timeout), msg);
 		}
 	}
 
@@ -92,94 +98,95 @@ public class CoordinationContextSaga {
 
 	    Map<String, String> param = new HashMap<String, String>();
 	    
-		BusinessActivityMessage data = new BusinessActivityMessage(this.txId, activityId, BusinessActivityStatus.COMPENSATING);
+		BusinessActivityMessage data = new BusinessActivityMessage(coordCtxId, activityId, BusinessActivityStatus.COMPENSATING);
 		
 		HttpEntity<BusinessActivityMessage> request = new HttpEntity<BusinessActivityMessage>(data, headers);
-		this.restTemplate.exchange(participantUrl, HttpMethod.PUT, request, Void.class, param);	
+		restTemplate.exchange(participantUrl, HttpMethod.PUT, request, Void.class, param);	
 	}
 	
-	@SagaEventHandler(associationProperty = "compositeTransactionId")
+	@SagaEventHandler(associationProperty = ASSOCIATION_PROPERTY)
 	@StartSaga
 	public void handle(CoordinationContextOpenEvent event) {
-		this.txId = event.getCompositeTransactionId();
-		LOG.info("RTS-BA SAGA-CMTX :: Transaction {} OPEN", this.txId);
+		coordCtxId = event.getCoordinationContextId();
+		LOG.info("RTS-BA SAGA-CMTX :: Coordination context {} OPEN", coordCtxId);
         
-        this.timeout = event.getTimeout();
-        this.scheduleTimeout();
+        timeout = event.getTimeout();
+        scheduleTimeout();
+        redis.convertAndSend(coordCtxId, "OPEN");
 	}
 
-	@SagaEventHandler(associationProperty = "compositeTransactionId")
+	@SagaEventHandler(associationProperty = ASSOCIATION_PROPERTY)
 	public void handle(CoordinationContextRegistrationEvent event) {
 		stack.add(event);
-		LOG.info("RTS-BA SAGA-CMTX :: Transaction {} :: Activity {} REGISTERED", this.txId, event.getActivityId());
+		LOG.info("RTS-BA SAGA-CMTX :: Coordination context {} :: Activity {} REGISTERED", coordCtxId, event.getActivityId());
 		
-		activityProtocol.activation(txId, event.getActivityId(), event.getParticipant(), BusinessActivityMessageType.REGISTRATION);
+		activityProtocol.activation(coordCtxId, event.getActivityId(), event.getParticipant(), BusinessActivityMessageType.REGISTRATION);
 	}
 	
-	@SagaEventHandler(associationProperty = "compositeTransactionId")
+	@SagaEventHandler(associationProperty = ASSOCIATION_PROPERTY)
 	public void handle(CoordinationContextPartialEvent event) {
-		this.lastStep = event.getStepIdentifier();
-		LOG.info("RTS-BA SAGA-CMTX :: Transaction {} STEP {} DONE", this.txId, event.getStepIdentifier());
+		lastStep = event.getStepIdentifier();
+		LOG.info("RTS-BA SAGA-CMTX :: Coordination context {} :: Activity {} DONE", coordCtxId, event.getStepIdentifier());
 	}
 
-	@SagaEventHandler(associationProperty = "compositeTransactionId")
+	@SagaEventHandler(associationProperty = ASSOCIATION_PROPERTY)
 	public void handle(CoordinationContextTimeoutEvent event) {
-		this.expired = true;
-		LOG.info("RTS-BA SAGA-CMTX :: Transaction {} TIMEOUT EXPIRED {} millis", this.txId, event.getTimeout());
+		expired = true;
+		LOG.info("RTS-BA SAGA-CMTX :: Coordination context {} TIMEOUT EXPIRED {} millis", coordCtxId, event.getTimeout());
 	}
 
-	@SagaEventHandler(associationProperty = "compositeTransactionId")
+	@SagaEventHandler(associationProperty = ASSOCIATION_PROPERTY)
 	public void handle(CoordinationContextSuspendEvent event) {
-		if (!this.suspended) {
+		if (!suspended) {
 			long now = System.currentTimeMillis();
-			LOG.info("RTS-BA SAGA-CMTX :: Transaction {} SUSPEND", this.txId);
+			LOG.info("RTS-BA SAGA-CMTX :: Coordination context {} SUSPEND", coordCtxId);
 			
-			if (null != this.timeoutToken) {
-				QuartzScheduleToken quartzToken = (QuartzScheduleToken)this.timeoutToken;
+			if (null != timeoutToken) {
+				QuartzScheduleToken quartzToken = (QuartzScheduleToken)timeoutToken;
 				JobKey quartzJob = new JobKey(quartzToken.getJobIdentifier(), quartzToken.getGroupIdentifier());
 				try {
-					List<? extends Trigger> triggers = this.schedulerFactoryBean.getScheduler().getTriggersOfJob(quartzJob);
+					List<? extends Trigger> triggers = schedulerFactoryBean.getScheduler().getTriggersOfJob(quartzJob);
 					if (triggers.size() == 1) {
-						this.timeout = triggers.get(0).getNextFireTime().getTime() - now;
-						this.scheduler.cancelSchedule(this.timeoutToken);
-						this.suspended = true;
-						LOG.info("RTS-BA SAGA-CMTX :: Transaction {} SUSPENDED :: Remaining time {}", this.txId, this.timeout);
+						timeout = triggers.get(0).getNextFireTime().getTime() - now;
+						scheduler.cancelSchedule(timeoutToken);
+						suspended = true;
+						LOG.info("RTS-BA SAGA-CMTX :: Coordination context {} SUSPENDED :: Remaining time {}", coordCtxId, timeout);
 					} else {
-						LOG.error("RTS-BA SAGA-CMTX :: Transaction {} Unable to suspend timeout");
+						LOG.error("RTS-BA SAGA-CMTX :: Coordination context {} Unable to suspend timeout");
 					}
 				} catch (SchedulerException e) {
-					LOG.error("RTS-BA SAGA-CMTX :: Transaction {} Unable to suspend timeout", e);
+					LOG.error("RTS-BA SAGA-CMTX :: Coordination context {} Unable to suspend timeout", e);
 				}
 			}
 		}
 	}
 
-	@SagaEventHandler(associationProperty = "compositeTransactionId")
+	@SagaEventHandler(associationProperty = ASSOCIATION_PROPERTY)
 	public void handle(CoordinationContextResumeEvent event) {
-		if (this.suspended) {
-			this.scheduleTimeout();
-			this.suspended = false;
-			LOG.info("RTS-BA SAGA-CMTX :: Transaction {} RESUMED :: Remaining time {}", this.txId, this.timeout);
+		if (suspended) {
+			scheduleTimeout();
+			suspended = false;
+			LOG.info("RTS-BA SAGA-CMTX :: Coordination context {} RESUMED :: Remaining time {}", coordCtxId, timeout);
 		}
 	}
 	
-	@SagaEventHandler(associationProperty = "compositeTransactionId")
+	@SagaEventHandler(associationProperty = ASSOCIATION_PROPERTY)
 	@EndSaga
 	public void handle(CoordinationContextCloseEvent event) {
-		LOG.info("RTS-BA SAGA-CMTX :: Transaction {} CLOSE", this.txId);
+		LOG.info("RTS-BA SAGA-CMTX :: Coordination context {} CLOSE", coordCtxId);
 		if (null != timeoutToken) {
 			scheduler.cancelSchedule(timeoutToken);
 		}
 
 		for (CoordinationContextRegistrationEvent registered:stack){
-			activityProtocol.close(txId, registered.getActivityId(), BusinessActivityMessageType.CLOSE);
+			activityProtocol.close(coordCtxId, registered.getActivityId(), BusinessActivityMessageType.CLOSE);
 		}
 	}
 	
-	@SagaEventHandler(associationProperty = "compositeTransactionId")
+	@SagaEventHandler(associationProperty = ASSOCIATION_PROPERTY)
 	@EndSaga
 	public void handle(CoordinationContextCompensateEvent event) {
-		LOG.info("RTS-BA SAGA-CMTX :: Transaction {} COMPENSATE", this.txId);
+		LOG.info("RTS-BA SAGA-CMTX :: Coordination context {} COMPENSATE", coordCtxId);
 		if (null != timeoutToken && !expired) {
 			scheduler.cancelSchedule(timeoutToken);
 		}
@@ -187,10 +194,10 @@ public class CoordinationContextSaga {
 		ListIterator<CoordinationContextRegistrationEvent> iterator = stack.listIterator(stack.size());
 		while (iterator.hasPrevious()) {
 			final CoordinationContextRegistrationEvent register = iterator.previous();
-			final BusinessActivityStatus status = sagaService.getBusinessActivityStatus(this.txId + "-" + register.getActivityId());
+			final BusinessActivityStatus status = sagaService.getBusinessActivityStatus(coordCtxId + "-" + register.getActivityId());
 			
 			if (BusinessActivityStatus.COMPLETED.equals(status)){
-				activityProtocol.compensate(this.txId, register.getActivityId(), BusinessActivityMessageType.COMPENSATE);		  
+				activityProtocol.compensate(coordCtxId, register.getActivityId(), BusinessActivityMessageType.COMPENSATE);		  
 				if (register.getParticipant().getProtocolEvents().contains(RtsBaMessage.COMPENSATE)){
 					try {
 						compensate(register.getParticipant().getAddress(), register.getActivityId());
@@ -199,7 +206,7 @@ public class CoordinationContextSaga {
 					}
 				} else {
 					// we must generate a COMPENSATED event in order to end the business activity saga
-					this.activityProtocol.compensated(this.txId, register.getActivityId(), BusinessActivityMessageType.COMPENSATED);
+					activityProtocol.compensated(coordCtxId, register.getActivityId(), BusinessActivityMessageType.COMPENSATED);
 				}
 			}
 		}	

@@ -31,9 +31,9 @@ public class RtsBaEventsDistributionConfig {
     }
 
 	@Bean
-	public EventProcessor txSagaEventProcessor(AbstractSagaManager<CoordinationContextSaga> sagaManager, SpringAMQPMessageSource sagaRemoteBus) {
+	public EventProcessor ctxSagaEventProcessor(AbstractSagaManager<CoordinationContextSaga> sagaManager, SpringAMQPMessageSource sagaRemoteBus) {
 		SubscribingEventProcessor eventProcessor = 
-				new SubscribingEventProcessor("txSagaEventProcessor", sagaManager, sagaRemoteBus);
+				new SubscribingEventProcessor("ctxSagaEventProcessor", sagaManager, sagaRemoteBus);
 		eventProcessor.start();
 
 		return eventProcessor;

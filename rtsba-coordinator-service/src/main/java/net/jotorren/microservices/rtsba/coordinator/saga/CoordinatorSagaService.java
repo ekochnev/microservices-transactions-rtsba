@@ -15,8 +15,8 @@ public class CoordinatorSagaService {
 	@Autowired
 	private JdbcSagaStore sagaStore;
 
-	public boolean isCompositeTransactionClosed(String compositeTransactionId) {
-		AssociationValue association = new AssociationValue("compositeTransactionId", compositeTransactionId);
+	public boolean isCoordinationContextClosed(String coordinationContextId) {
+		AssociationValue association = new AssociationValue(CoordinationContextSaga.ASSOCIATION_PROPERTY, coordinationContextId);
 		Set<String> items = sagaStore.findSagas(CoordinationContextSaga.class, association);
 		if (items.isEmpty()) {
 			return true;

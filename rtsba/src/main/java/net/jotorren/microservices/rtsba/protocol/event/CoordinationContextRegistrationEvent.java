@@ -7,8 +7,8 @@ public class CoordinationContextRegistrationEvent extends CoordinationContextEve
 
 	private CoordinationContextParticipant participant;
 	
-	public CoordinationContextRegistrationEvent(String compositeTransactionId, CoordinationContextParticipant participant) {
-		super(compositeTransactionId);
+	public CoordinationContextRegistrationEvent(String coordinationContextId, CoordinationContextParticipant participant) {
+		super(coordinationContextId);
 		this.participant = participant;
 	}
 

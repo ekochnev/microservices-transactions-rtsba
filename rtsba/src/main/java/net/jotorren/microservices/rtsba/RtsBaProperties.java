@@ -19,6 +19,9 @@ public class RtsBaProperties {
 	
 //	@Value("${rtsba.transaction-timeout}")
 	private long transactionTimeout	= 60000;
+
+//	@Value("${rtsba.open-timeout}")
+	private long openTimeout	= 5000;
 	
 //	@Value("${rtsba.activation-timeout}")
 	private long activationTimeout	= 5000;
@@ -63,6 +66,14 @@ public class RtsBaProperties {
 		this.transactionTimeout = transactionTimeout;
 	}
 
+	public long getOpenTimeout() {
+		return openTimeout;
+	}
+
+	public void setOpenTimeout(long openTimeout) {
+		this.openTimeout = openTimeout;
+	}
+	
 	public long getActivationTimeout() {
 		return activationTimeout;
 	}
@@ -70,5 +81,4 @@ public class RtsBaProperties {
 	public void setActivationTimeout(long activationTimeout) {
 		this.activationTimeout = activationTimeout;
 	}
-
 }

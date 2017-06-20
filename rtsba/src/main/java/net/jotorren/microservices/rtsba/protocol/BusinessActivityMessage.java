@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class BusinessActivityMessage implements Serializable {
 	private static final long serialVersionUID = -6986128600085710578L;
 
-	private String compositeTransactionId;
+	private String coordinationContextId;
 	private String activityId;
 	private BusinessActivityStatus status;
 
@@ -13,19 +13,19 @@ public class BusinessActivityMessage implements Serializable {
 		super();
 	}
 	
-	public BusinessActivityMessage(String compositeTransactionId, String activityId, BusinessActivityStatus status) {
+	public BusinessActivityMessage(String coordinationContextId, String activityId, BusinessActivityStatus status) {
 		super();
-		this.compositeTransactionId = compositeTransactionId;
+		this.coordinationContextId = coordinationContextId;
 		this.activityId = activityId;
 		this.status = status;
 	}
-	
-	public String getCompositeTransactionId() {
-		return compositeTransactionId;
+
+	public String getCoordinationContextId() {
+		return coordinationContextId;
 	}
 
-	public void setCompositeTransactionId(String compositeTransactionId) {
-		this.compositeTransactionId = compositeTransactionId;
+	public void setCoordinationContextId(String coordinationContextId) {
+		this.coordinationContextId = coordinationContextId;
 	}
 
 	public String getActivityId() {
@@ -43,5 +43,4 @@ public class BusinessActivityMessage implements Serializable {
 	public void setStatus(BusinessActivityStatus status) {
 		this.status = status;
 	}
-
 }

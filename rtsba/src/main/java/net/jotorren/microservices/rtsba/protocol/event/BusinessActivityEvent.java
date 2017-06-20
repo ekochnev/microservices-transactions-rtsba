@@ -5,24 +5,24 @@ import java.io.Serializable;
 public abstract class BusinessActivityEvent implements Serializable {
 	private static final long serialVersionUID = 6519008042493031966L;
 
-	private String compositeTransactionId;
+	private String coordinationContextId;
 	private String activityId;
 
-	public BusinessActivityEvent(String compositeTransactionId, String activityId) {
+	public BusinessActivityEvent(String coordinationContextId, String activityId) {
 		super();
-		this.compositeTransactionId = compositeTransactionId;
+		this.coordinationContextId = coordinationContextId;
 		this.activityId = activityId;
 	}
 
-	public String getCompositeTransactionId() {
-		return compositeTransactionId;
+	public String getCoordinationContextId() {
+		return this.coordinationContextId;
 	}
 	
 	public String getActivityId() {
-		return activityId;
+		return this.activityId;
 	}
 	
 	public String getActivityInstanceId() {
-		return compositeTransactionId + "-" + activityId;
+		return this.coordinationContextId + "-" + this.activityId;
 	}
 }
